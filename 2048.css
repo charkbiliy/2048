@@ -1,0 +1,141 @@
+*{
+	margin:0;
+	padding:0;
+}
+#gridPanel{
+	width:480px;
+	height:480px;
+	margin:0 auto;
+	position:relative;
+	background-color:#bbada0;
+	border-radius:10px;
+}
+.grid,.cell{
+	width:100px;
+	height:100px;
+	border-radius:6px;
+}
+.grid{
+	background-color:#ccc0b3;
+	float:left;/*背景图用float*/
+	margin:16px 0 0 16px;
+}
+.cell{
+	position:absolute;/*前景图用定位覆盖到背景图上*/
+	text-align:center;/*字体水平居中*/
+	line-height:100px;/*垂直居中*/
+	font-size:60px;
+	color:#fff;/*字体除了2,4都是白色*/
+}
+#gameover{
+	width:480px;
+	height:480px;
+	margin:0 auto;
+	text-align:center;
+	position:absolute;
+	line-height:480px;
+	z-index:1;
+	display:block;
+	background-color:rgb(0,0,0,0.5);
+}
+#gameover h3{
+	height:100px;
+	line-height:150px;
+	font-size:23px;
+	font-weight:bold;
+	color:white;
+}
+#gameover .s2{
+	height:50px;
+	line-height:50px;
+	color:white;
+}
+#gameover a{
+	width:150px;
+	height:50px;
+	display:block;
+	line-height:50px;
+	background-color:chocolate;
+	color:white;
+	font-size:25px;
+	font-weight:bold;
+	text-decoration: none;
+	margin:0 auto;
+	border-radius:20px;
+}
+.head{
+	width:250px;
+	height:250px;
+	text-align:center;
+	margin:0 auto;
+}
+.head>h3{
+	width:250px;
+	background-color:#ccc0b3;
+	font-size:30px;
+	color:white;
+	line-height:80px;
+	height:80px;
+	border-radius:20px;
+	margin:30px auto; 
+}
+ .head .s1{
+	display:inline-block;
+	width:80px;
+	height:30px;
+	font-weight:bold;
+	line-height:30px;
+	background-color:#ccc0b4;
+	border-radius:10px;
+ }
+ .head>a{
+	display:inline-block;
+	width:80px;
+	height:30px;
+	font-weight:bold;
+	line-height:30px;
+	background-color:#ccc0b4;
+	border-radius:10px;
+	color:red;
+	text-decoration:none;
+	margin-right:15px;
+ }
+#score1{
+	font-size:20px;
+	font-weight:bold;
+}
+#c00,#c01,#c02,#c03{top:16px;}
+#c10,#c11,#c12,#c13{top:132px;}
+#c20,#c21,#c22,#c23{top:248px;}
+#c30,#c31,#c32,#c33{top:364px;}
+
+#c00,#c10,#c20,#c30{left:16px;}
+#c01,#c11,#c21,#c31{left:132px;}
+#c02,#c12,#c22,#c32{left:248px;}
+#c03,#c13,#c23,#c33{left:364px;}
+
+/*每个数字的样式*/
+.n2{background-color:#eee3da}
+.n4{background-color:#ede0c8}
+.n8{background-color:#93c}
+.n16{background-color:#a6c}
+.n32{background-color:#09c}
+.n64{background-color:#9c0}
+.n128{background-color:#edcc61}
+.n256{background-color:#edcf72}
+.n512{background-color:#f65e3b}
+.n1024{background-color:#33b5e5}
+.n2048{background-color:#f67c5f}
+.n4096{background-color:#f59563}
+.n8192{background-color:#f2b179}
+.n2,.n4{color:#776e65}
+.n128,.n256,.n512{font-size:50px}
+.n1024,.n2048,.n4096,.n8192{font-size:40px}
+
+
+
+
+
+
+
+
