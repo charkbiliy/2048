@@ -1,0 +1,7 @@
+data/raw/*.csv
+output/*
+!output/.gitkeep
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
