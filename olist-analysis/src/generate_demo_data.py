@@ -46,7 +46,9 @@ def generate_demo_data(output_dir: Path, seed: int = 42) -> None:
 
         base_days = {"SP": 5, "RJ": 7, "MG": 8, "PR": 9, "BA": 13}[state]
         delayed = bool(rng.random() < (0.10 if state != "BA" else 0.28))
-        delivery_days = max(2, base_days + int(rng.normal(0, 2)) + (8 if delayed else 0))
+        delivery_days = max(
+            2, base_days + int(rng.normal(0, 2)) + (8 if delayed else 0)
+        )
         delivered = purchase + pd.Timedelta(days=delivery_days)
         estimated = purchase + pd.Timedelta(days=base_days + 5)
         status = "canceled" if rng.random() < 0.035 else "delivered"
@@ -57,7 +59,9 @@ def generate_demo_data(output_dir: Path, seed: int = 42) -> None:
                 "customer_id": customer_id,
                 "order_status": status,
                 "order_purchase_timestamp": purchase,
-                "order_delivered_customer_date": delivered if status == "delivered" else pd.NaT,
+                "order_delivered_customer_date": (
+                    delivered if status == "delivered" else pd.NaT
+                ),
                 "order_estimated_delivery_date": estimated,
             }
         )
@@ -87,12 +91,16 @@ def generate_demo_data(output_dir: Path, seed: int = 42) -> None:
                 }
             )
 
-        score_center = 4.45 - (1.45 if delayed else 0) - (0.5 if status == "canceled" else 0)
+        score_center = (
+            4.45 - (1.45 if delayed else 0) - (0.5 if status == "canceled" else 0)
+        )
         review_rows.append(
             {
                 "review_id": f"review_{i:04d}",
                 "order_id": order_id,
-                "review_score": int(np.clip(round(rng.normal(score_center, 0.75)), 1, 5)),
+                "review_score": int(
+                    np.clip(round(rng.normal(score_center, 0.75)), 1, 5)
+                ),
             }
         )
         payment_rows.append(

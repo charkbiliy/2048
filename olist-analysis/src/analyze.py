@@ -57,9 +57,7 @@ def build_order_mart(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
             item_count=("order_item_id", "count"),
         )
     )
-    reviews = (
-        data["reviews"].groupby("order_id", as_index=False)["review_score"].mean()
-    )
+    reviews = data["reviews"].groupby("order_id", as_index=False)["review_score"].mean()
     mart = (
         data["orders"]
         .merge(data["customers"], on="customer_id", how="left", validate="many_to_one")
@@ -76,8 +74,7 @@ def build_order_mart(data: dict[str, pd.DataFrame]) -> pd.DataFrame:
         mart["order_delivered_customer_date"] - mart["order_purchase_timestamp"]
     ).dt.total_seconds() / 86400
     mart["is_delayed"] = (
-        mart["order_delivered_customer_date"]
-        > mart["order_estimated_delivery_date"]
+        mart["order_delivered_customer_date"] > mart["order_estimated_delivery_date"]
     )
     return mart
 
@@ -114,9 +111,13 @@ def monthly_metrics(delivered: pd.DataFrame) -> pd.DataFrame:
 
 
 def cohort_retention(delivered: pd.DataFrame) -> pd.DataFrame:
-    customer_month = delivered[["customer_unique_id", "purchase_month"]].drop_duplicates()
+    customer_month = delivered[
+        ["customer_unique_id", "purchase_month"]
+    ].drop_duplicates()
     first_month = customer_month.groupby("customer_unique_id")["purchase_month"].min()
-    cohort = customer_month.join(first_month.rename("cohort_month"), on="customer_unique_id")
+    cohort = customer_month.join(
+        first_month.rename("cohort_month"), on="customer_unique_id"
+    )
     cohort["month_number"] = (
         (cohort["purchase_month"].dt.year - cohort["cohort_month"].dt.year) * 12
         + cohort["purchase_month"].dt.month
@@ -133,16 +134,13 @@ def cohort_retention(delivered: pd.DataFrame) -> pd.DataFrame:
 
 def rfm_segmentation(delivered: pd.DataFrame) -> pd.DataFrame:
     snapshot = delivered["order_purchase_timestamp"].max() + pd.Timedelta(days=1)
-    rfm = (
-        delivered.groupby("customer_unique_id", as_index=False)
-        .agg(
-            recency_days=(
-                "order_purchase_timestamp",
-                lambda s: (snapshot - s.max()).days,
-            ),
-            frequency=("order_id", "nunique"),
-            monetary=("gmv", "sum"),
-        )
+    rfm = delivered.groupby("customer_unique_id", as_index=False).agg(
+        recency_days=(
+            "order_purchase_timestamp",
+            lambda s: (snapshot - s.max()).days,
+        ),
+        frequency=("order_id", "nunique"),
+        monetary=("gmv", "sum"),
     )
     rfm["r_score"] = 6 - np.ceil(
         rfm["recency_days"].rank(method="first", pct=True) * 5
@@ -150,9 +148,9 @@ def rfm_segmentation(delivered: pd.DataFrame) -> pd.DataFrame:
     rfm["f_score"] = np.ceil(
         rfm["frequency"].rank(method="first", pct=True) * 5
     ).astype(int)
-    rfm["m_score"] = np.ceil(
-        rfm["monetary"].rank(method="first", pct=True) * 5
-    ).astype(int)
+    rfm["m_score"] = np.ceil(rfm["monetary"].rank(method="first", pct=True) * 5).astype(
+        int
+    )
 
     conditions = [
         (rfm["r_score"] >= 4) & (rfm["f_score"] >= 4),
@@ -218,7 +216,20 @@ def save_charts(
     fig.savefig(charts_dir / "cohort_retention.png", dpi=150)
     plt.close(fig)
 
-    segment = rfm.groupby("segment")["customer_unique_id"].count().sort_values()
+    chart_labels = {
+        "高价值客户": "Champions",
+        "潜力客户": "Potential Loyalists",
+        "新客户": "New Customers",
+        "即将流失客户": "At Risk",
+        "沉睡客户": "Hibernating",
+        "一般客户": "Regular Customers",
+    }
+    segment = (
+        rfm.assign(chart_segment=rfm["segment"].map(chart_labels))
+        .groupby("chart_segment")["customer_unique_id"]
+        .count()
+        .sort_values()
+    )
     fig, ax = plt.subplots(figsize=(9, 5))
     segment.plot.barh(ax=ax, color="#0f766e")
     ax.set(title="RFM Customer Segments", xlabel="Customers", ylabel="")
@@ -239,7 +250,14 @@ def write_report(
     on_time = delivered[~delivered["is_delayed"]]
     delayed_rate = delivered["is_delayed"].mean()
     score_gap = on_time["review_score"].mean() - delayed["review_score"].mean()
-    latest_repeat = monthly.iloc[-1]["repeat_customer_rate"]
+    latest_row = monthly.iloc[-1]
+    max_purchase = delivered["order_purchase_timestamp"].max()
+    if (
+        max_purchase.day < (max_purchase + pd.offsets.MonthEnd(0)).day
+        and len(monthly) > 1
+    ):
+        latest_row = monthly.iloc[-2]
+    latest_repeat = latest_row["repeat_customer_rate"]
     cancel_rate = (mart["order_status"] == "canceled").mean()
     top_category = categories.iloc[0]["product_category_name"]
     top_segment = rfm["segment"].value_counts().idxmax()
@@ -254,7 +272,8 @@ def write_report(
         "on_time_minus_delayed_review_score": (
             None if pd.isna(score_gap) else round(float(score_gap), 2)
         ),
-        "latest_month_repeat_customer_rate": round(float(latest_repeat), 4),
+        "latest_complete_month": latest_row["purchase_month"].strftime("%Y-%m"),
+        "latest_complete_month_repeat_customer_rate": round(float(latest_repeat), 4),
         "top_category_by_gmv": top_category,
     }
     (output_dir / "summary.json").write_text(
@@ -272,7 +291,7 @@ def write_report(
 - GMV：{summary["gmv"]:,.2f}
 - 有效客户：{summary["customers"]:,} 人
 - 取消率：{summary["cancel_rate"]:.1%}
-- 最新月份老客占比：{summary["latest_month_repeat_customer_rate"]:.1%}
+- 最近完整月份（{summary["latest_complete_month"]}）老客占比：{summary["latest_complete_month_repeat_customer_rate"]:.1%}
 
 ## 关键发现
 
@@ -301,8 +320,7 @@ def run_analysis(raw_dir: Path, output_dir: Path) -> None:
     data = load_data(raw_dir)
     mart = build_order_mart(data)
     delivered = mart[
-        (mart["order_status"] == "delivered")
-        & mart["order_purchase_timestamp"].notna()
+        (mart["order_status"] == "delivered") & mart["order_purchase_timestamp"].notna()
     ].copy()
     if delivered.empty:
         raise ValueError("没有可分析的已送达订单。")
